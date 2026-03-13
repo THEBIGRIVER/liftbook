@@ -34,7 +34,11 @@ import {
   AlertCircle,
   Info,
   Share,
-  Check
+  Check,
+  Search,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Navigation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -91,6 +95,20 @@ const AuthContext = createContext<{
 });
 
 const useAuth = () => useContext(AuthContext);
+
+// --- Utils ---
+
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+};
 
 // --- Components ---
 
@@ -168,9 +186,16 @@ const RideCard = ({
     >
       <div className="flex justify-between items-start">
         <div className="space-y-1 flex-1">
-          <div className="flex items-center gap-2 text-stone-500 text-xs uppercase tracking-wider font-semibold">
-            <Clock size={14} />
-            {format(new Date(ride.departure_time), 'MMM d, h:mm a')}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-stone-500 text-xs uppercase tracking-wider font-semibold">
+              <Clock size={14} />
+              {format(new Date(ride.departure_time), 'MMM d, h:mm a')}
+            </div>
+            {ride.name && (
+              <span className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
+                {ride.name}
+              </span>
+            )}
           </div>
           <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 flex-wrap">
             <span className="text-emerald-600">{ride.pickup_text || "Current Location"}</span>
@@ -329,6 +354,17 @@ const RideForm = ({
               {/* Basic Info */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
+                  <label className="text-sm font-medium text-stone-300">Your Name <span className="text-red-500">*</span></label>
+                  <input 
+                    required
+                    type="text"
+                    placeholder="e.g. John Doe"
+                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
                   <label className="text-sm font-medium text-stone-300">WhatsApp Number <span className="text-red-500">*</span></label>
                   <input 
                     required
@@ -466,6 +502,14 @@ export default function App() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
+  // Filtering & Sorting State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceFilter, setPriceFilter] = useState<number>(5000);
+  const [seatsFilter, setSeatsFilter] = useState<number>(1);
+  const [sortBy, setSortBy] = useState<'latest' | 'price' | 'nearest'>('latest');
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -534,6 +578,46 @@ export default function App() {
       console.error("Logout failed", error);
     }
   };
+
+  const handleLocateMe = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation([position.coords.latitude, position.coords.longitude]);
+        },
+        (error) => {
+          console.error("Error getting location", error);
+          alert("Could not get your location. Please check your browser permissions.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
+  const filteredRides = rides
+    .filter(ride => {
+      const matchesSearch = 
+        (ride.pickup_text?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (ride.destination_text?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      const matchesPrice = ride.offer_price <= priceFilter;
+      const matchesSeats = ride.passenger_count >= seatsFilter;
+      return matchesSearch && matchesPrice && matchesSeats;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'latest') {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      if (sortBy === 'price') {
+        return a.offer_price - b.offer_price;
+      }
+      if (sortBy === 'nearest' && userLocation) {
+        const distA = getDistance(userLocation[0], userLocation[1], a.pickup_lat, a.pickup_lng);
+        const distB = getDistance(userLocation[0], userLocation[1], b.pickup_lat, b.pickup_lng);
+        return distA - distB;
+      }
+      return 0;
+    });
 
   const handlePostRide = async (data: Partial<Ride>) => {
     if (!user) return;
@@ -678,13 +762,98 @@ export default function App() {
 
         {/* Main Feed */}
         <main className="flex-1 p-6 space-y-6 pb-24 bg-black">
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold text-white">Recent Ride Requests</h2>
-            <p className="text-sm text-stone-400">Find someone to share a lift with.</p>
+          <div className="flex justify-between items-end">
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-white">Recent Ride Requests</h2>
+              <p className="text-sm text-stone-400">Find someone to share a lift with.</p>
+            </div>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-emerald-600 text-white' : 'bg-stone-900 text-stone-400 hover:text-white'}`}
+            >
+              <SlidersHorizontal size={20} />
+            </button>
           </div>
 
+          {/* Filters & Search */}
+          <AnimatePresence>
+            {showFilters && (
+              <motion.div 
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden space-y-4 bg-stone-900/50 p-4 rounded-2xl border border-stone-800"
+              >
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" size={18} />
+                  <input 
+                    type="text"
+                    placeholder="Search locations..."
+                    className="w-full pl-10 pr-4 py-2 bg-stone-900 border border-stone-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Max Price (₹{priceFilter})</label>
+                    <input 
+                      type="range"
+                      min="0"
+                      max="5000"
+                      step="100"
+                      className="w-full accent-emerald-600"
+                      value={priceFilter}
+                      onChange={(e) => setPriceFilter(parseInt(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Min Seats ({seatsFilter}+)</label>
+                    <input 
+                      type="range"
+                      min="1"
+                      max="10"
+                      className="w-full accent-emerald-600"
+                      value={seatsFilter}
+                      onChange={(e) => setSeatsFilter(parseInt(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <div className="flex-1 flex bg-stone-900 rounded-xl p-1 border border-stone-800">
+                    {(['latest', 'price', 'nearest'] as const).map((option) => (
+                      <button
+                        key={option}
+                        onClick={() => {
+                          if (option === 'nearest' && !userLocation) {
+                            handleLocateMe();
+                          }
+                          setSortBy(option);
+                        }}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all capitalize ${sortBy === option ? 'bg-emerald-600 text-white' : 'text-stone-500 hover:text-stone-300'}`}
+                      >
+                        {option}
+                      </button>
+                    ))}
+                  </div>
+                  {sortBy === 'nearest' && !userLocation && (
+                    <button 
+                      onClick={handleLocateMe}
+                      className="p-2 bg-stone-900 text-emerald-500 rounded-xl border border-stone-800 hover:bg-stone-800 transition-colors"
+                      title="Get Current Location"
+                    >
+                      <Navigation size={20} />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="popLayout">
-            {rides.length === 0 ? (
+            {filteredRides.length === 0 ? (
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -693,10 +862,10 @@ export default function App() {
                 <div className="bg-stone-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-stone-600">
                   <Info size={32} />
                 </div>
-                <p className="text-stone-400 font-medium">No ride requests yet. Be the first!</p>
+                <p className="text-stone-400 font-medium">No ride requests match your filters.</p>
               </motion.div>
             ) : (
-              rides.map(ride => (
+              filteredRides.map(ride => (
                 <RideCard 
                   key={ride.id} 
                   ride={ride} 
