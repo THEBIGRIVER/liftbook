@@ -172,6 +172,7 @@ const RideCard = ({
   isOwner: boolean;
   key?: React.Key;
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const whatsappUrl = `https://wa.me/${ride.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
     `Hi, I saw your LiftBook ride request from ${ride.pickup_text || 'your location'} to ${ride.destination_text || 'destination'}. Are you still looking for a lift?`
   )}`;
@@ -182,7 +183,8 @@ const RideCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 space-y-4 hover:shadow-md transition-shadow"
+      onClick={() => setIsExpanded(!isExpanded)}
+      className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 space-y-4 hover:shadow-md transition-all cursor-pointer group"
     >
       <div className="flex justify-between items-start">
         <div className="space-y-1 flex-1">
@@ -199,63 +201,86 @@ const RideCard = ({
           </div>
           <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 flex-wrap">
             <span className="text-emerald-600">{ride.pickup_text || "Current Location"}</span>
-            <ChevronRight size={16} className="text-stone-300" />
+            <ChevronRight size={16} className={`text-stone-300 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
             <span className="text-blue-600">{ride.destination_text || "Destination"}</span>
           </h3>
         </div>
-        <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold text-sm flex items-center gap-1">
+        <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold text-sm flex items-center gap-1 shrink-0">
           <IndianRupee size={14} />
           {ride.offer_price}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 py-2 border-y border-stone-50">
-        <div className="flex items-center gap-2 text-stone-600">
-          <Users size={18} className="text-stone-400" />
-          <span className="text-sm font-medium">{ride.passenger_count} Passengers</span>
-        </div>
-        <div className="flex items-center gap-2 text-stone-600">
-          <div className={`w-2 h-2 rounded-full ${ride.gender === 'Male' ? 'bg-blue-400' : ride.gender === 'Female' ? 'bg-pink-400' : 'bg-purple-400'}`} />
-          <span className="text-sm font-medium">{ride.gender}</span>
-        </div>
-      </div>
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden space-y-4"
+          >
+            <div className="grid grid-cols-2 gap-4 py-2 border-y border-stone-50">
+              <div className="flex items-center gap-2 text-stone-600">
+                <Users size={18} className="text-stone-400" />
+                <span className="text-sm font-medium">{ride.passenger_count} Passengers</span>
+              </div>
+              <div className="flex items-center gap-2 text-stone-600">
+                <div className={`w-2 h-2 rounded-full ${ride.gender === 'Male' ? 'bg-blue-400' : ride.gender === 'Female' ? 'bg-pink-400' : 'bg-purple-400'}`} />
+                <span className="text-sm font-medium">{ride.gender}</span>
+              </div>
+            </div>
 
-      {ride.notes && (
-        <p className="text-sm text-stone-500 italic">"{ride.notes}"</p>
-      )}
+            {ride.notes && (
+              <p className="text-sm text-stone-500 italic">"{ride.notes}"</p>
+            )}
 
-      <div className="flex gap-2 pt-2">
-        <a 
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-100"
-        >
-          <MessageCircle size={20} />
-          Contact on WhatsApp
-        </a>
-        
-        {isOwner && (
-          <div className="flex gap-2">
-            <button 
-              type="button"
-              onClick={() => onEdit(ride)}
-              className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl transition-colors touch-manipulation active:scale-95"
-              title="Edit Ride"
-            >
-              <Edit2 size={20} />
-            </button>
-            <button 
-              type="button"
-              onClick={() => onDelete(ride.id)}
-              className="p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors touch-manipulation active:scale-95"
-              title="Delete Ride"
-            >
-              <Trash2 size={20} />
-            </button>
-          </div>
+            <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+              <a 
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-100"
+              >
+                <MessageCircle size={20} />
+                Contact on WhatsApp
+              </a>
+              
+              {isOwner && (
+                <div className="flex gap-2">
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(ride);
+                    }}
+                    className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl transition-colors touch-manipulation active:scale-95"
+                    title="Edit Ride"
+                  >
+                    <Edit2 size={20} />
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(ride.id);
+                    }}
+                    className="p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors touch-manipulation active:scale-95"
+                    title="Delete Ride"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
+      
+      {!isExpanded && (
+        <div className="text-[10px] text-stone-400 text-center font-medium uppercase tracking-widest pt-1 group-hover:text-emerald-500 transition-colors">
+          Tap to see details
+        </div>
+      )}
     </motion.div>
   );
 };
