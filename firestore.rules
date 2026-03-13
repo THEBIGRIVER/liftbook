@@ -40,17 +40,17 @@ service cloud.firestore {
              data.offer_price is number && data.offer_price >= 0 &&
              data.departure_time is string &&
              data.created_at is string &&
-             data.uid is string;
+             (data.uid is string || data.uid == null);
     }
 
     match /rides/{rideId} {
       // Anyone can read ride requests to facilitate the community board
       allow read: if true;
       
-      // Only authenticated users can create ride requests
-      allow create: if isAuthenticated() && 
-                      isValidRide(request.resource.data) && 
-                      request.resource.data.uid == request.auth.uid;
+      // Anyone can create ride requests (guest posting)
+      // If authenticated, we enforce uid match. If not, we allow it.
+      allow create: if isValidRide(request.resource.data) && 
+                      (isAuthenticated() ? request.resource.data.uid == request.auth.uid : request.resource.data.uid == "guest");
       
       // Only the owner can update or delete their ride request
       allow update: if isAuthenticated() && 

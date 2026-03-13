@@ -198,6 +198,11 @@ const RideCard = ({
                 {ride.name}
               </span>
             )}
+            {ride.uid === 'guest' && (
+              <span className="text-[10px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter ml-2">
+                Guest
+              </span>
+            )}
           </div>
           <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 flex-wrap">
             <span className="text-emerald-600">{ride.pickup_text || "Current Location"}</span>
@@ -645,7 +650,6 @@ export default function App() {
     });
 
   const handlePostRide = async (data: Partial<Ride>) => {
-    if (!user) return;
     try {
       if (editingRide) {
         await updateDoc(doc(db, 'rides', editingRide.id), {
@@ -655,7 +659,7 @@ export default function App() {
       } else {
         await addDoc(collection(db, 'rides'), {
           ...data,
-          uid: user.uid,
+          uid: user?.uid || 'guest',
           created_at: new Date().toISOString()
         });
       }
@@ -919,12 +923,8 @@ export default function App() {
         whileTap={{ scale: 0.95 }}
         onClick={() => {
           console.log("FAB clicked");
-          if (!user) {
-            login();
-          } else {
-            setEditingRide(null);
-            setIsFormOpen(true);
-          }
+          setEditingRide(null);
+          setIsFormOpen(true);
         }}
         className="fixed bottom-8 right-8 z-[60] bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl shadow-emerald-200 flex items-center gap-2 font-bold cursor-pointer touch-manipulation active:bg-emerald-700"
       >
