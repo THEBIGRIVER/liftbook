@@ -14,6 +14,8 @@ import {
   onSnapshot, 
   query, 
   orderBy,
+  Timestamp,
+  browserPopupRedirectResolver,
   User
 } from './firebase';
 import { 
@@ -115,11 +117,11 @@ const MapPicker = ({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-stone-700 flex items-center gap-1">
-        <MapPin size={16} className="text-emerald-600" />
+      <label className="text-sm font-medium text-stone-300 flex items-center gap-1">
+        <MapPin size={16} className="text-emerald-500" />
         {label} <span className="text-red-500">*</span>
       </label>
-      <div className="h-48 w-full rounded-xl overflow-hidden border border-stone-200 shadow-inner relative">
+      <div className="h-48 w-full rounded-xl overflow-hidden border border-stone-700 shadow-inner relative">
         <MapContainer 
           center={position || [22.5726, 88.3639]} 
           zoom={13} 
@@ -132,7 +134,7 @@ const MapPicker = ({
           />
           <LocationMarker />
         </MapContainer>
-        <div className="absolute bottom-2 right-2 z-[1000] bg-white/90 backdrop-blur px-2 py-1 rounded text-[10px] text-stone-500 border border-stone-200">
+        <div className="absolute bottom-2 right-2 z-[1000] bg-stone-900/90 backdrop-blur px-2 py-1 rounded text-[10px] text-stone-400 border border-stone-700">
           Tap map to set location
         </div>
       </div>
@@ -281,16 +283,16 @@ const RideForm = ({
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
-        className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
+        className="bg-stone-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
       >
-        <div className="p-4 border-b border-stone-100 flex justify-between items-center sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-stone-900">
+        <div className="p-4 border-b border-stone-800 flex justify-between items-center sticky top-0 bg-stone-900 z-10">
+          <h2 className="text-xl font-bold text-white">
             {initialData ? 'Edit Ride Request' : 'Post Ride Request'}
           </h2>
           <button 
             type="button"
             onClick={onClose} 
-            className="p-2 hover:bg-stone-100 rounded-full transition-colors touch-manipulation active:scale-90"
+            className="p-2 hover:bg-stone-800 rounded-full transition-colors touch-manipulation active:scale-90 text-stone-400"
           >
             <X size={24} />
           </button>
@@ -299,25 +301,25 @@ const RideForm = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto">
           {showSafety ? (
             <div className="space-y-6 py-4">
-              <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex gap-3">
-                <AlertCircle className="text-amber-600 shrink-0" />
+              <div className="bg-amber-900/20 border border-amber-900/30 p-4 rounded-2xl flex gap-3">
+                <AlertCircle className="text-amber-500 shrink-0" />
                 <div className="space-y-2">
-                  <h3 className="font-bold text-amber-900">Safety Disclaimer</h3>
-                  <p className="text-sm text-amber-800 leading-relaxed">
+                  <h3 className="font-bold text-amber-200">Safety Disclaimer</h3>
+                  <p className="text-sm text-amber-100 leading-relaxed">
                     LiftBook only displays ride requests posted by users. LiftBook does not arrange rides and does not handle payments. Users are responsible for their own safety and agreements.
                   </p>
                 </div>
               </div>
               <button 
                 type="submit"
-                className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all"
+                className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 transition-all"
               >
                 I Understand, Post Ride
               </button>
               <button 
                 type="button"
                 onClick={() => setShowSafety(false)}
-                className="w-full text-stone-500 font-medium py-2"
+                className="w-full text-stone-400 font-medium py-2"
               >
                 Go Back
               </button>
@@ -327,12 +329,12 @@ const RideForm = ({
               {/* Basic Info */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-700">WhatsApp Number <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-stone-300">WhatsApp Number <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="tel"
                     placeholder="e.g. 9876543210"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     value={formData.whatsapp}
                     onChange={e => setFormData({...formData, whatsapp: e.target.value})}
                   />
@@ -340,9 +342,9 @@ const RideForm = ({
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-stone-700">Gender <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-medium text-stone-300">Gender <span className="text-red-500">*</span></label>
                     <select 
-                      className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-stone-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-stone-800 text-white"
                       value={formData.gender}
                       onChange={e => setFormData({...formData, gender: e.target.value})}
                     >
@@ -352,9 +354,9 @@ const RideForm = ({
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-stone-700">Passengers <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-medium text-stone-300">Passengers <span className="text-red-500">*</span></label>
                     <select 
-                      className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-stone-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-stone-800 text-white"
                       value={formData.passenger_count}
                       onChange={e => setFormData({...formData, passenger_count: parseInt(e.target.value)})}
                     >
@@ -377,7 +379,7 @@ const RideForm = ({
                   <input 
                     type="text"
                     placeholder="Pickup Landmark (Optional)"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     value={formData.pickup_text}
                     onChange={e => setFormData({...formData, pickup_text: e.target.value})}
                   />
@@ -392,7 +394,7 @@ const RideForm = ({
                   <input 
                     type="text"
                     placeholder="Destination Landmark (Optional)"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     value={formData.destination_text}
                     onChange={e => setFormData({...formData, destination_text: e.target.value})}
                   />
@@ -402,25 +404,25 @@ const RideForm = ({
               {/* Offer & Time */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-700">Offer Price (₹) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-stone-300">Offer Price (₹) <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <IndianRupee size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
+                    <IndianRupee size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" />
                     <input 
                       required
                       type="number"
                       min="0"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                       value={formData.offer_price}
                       onChange={e => setFormData({...formData, offer_price: parseFloat(e.target.value)})}
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-700">Departure Time <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-medium text-stone-300">Departure Time <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="datetime-local"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                     value={formData.departure_time}
                     onChange={e => setFormData({...formData, departure_time: e.target.value})}
                   />
@@ -429,10 +431,10 @@ const RideForm = ({
 
               {/* Notes */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-stone-700">Ride Notes (Optional)</label>
+                <label className="text-sm font-medium text-stone-300">Ride Notes (Optional)</label>
                 <textarea 
                   placeholder="e.g. Airport drop, Urgent ride"
-                  className="w-full px-4 py-3 rounded-xl border border-stone-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all h-24 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all h-24 resize-none"
                   value={formData.notes}
                   onChange={e => setFormData({...formData, notes: e.target.value})}
                 />
@@ -440,7 +442,7 @@ const RideForm = ({
 
               <button 
                 type="submit"
-                className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all"
+                className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 transition-all"
               >
                 {initialData ? 'Update Ride' : 'Post Ride'}
               </button>
@@ -461,6 +463,7 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [showShareFeedback, setShowShareFeedback] = useState(false);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -483,16 +486,26 @@ export default function App() {
   }, []);
 
   const login = async () => {
-    console.log("Starting login process...");
+    console.log("Starting login process with resolver...");
     try {
-      await signInWithPopup(auth, googleProvider);
+      // Explicitly pass the resolver which can help in some mobile/iframe environments
+      await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
       console.log("Login successful");
     } catch (error: any) {
       console.error("Login failed", error);
+      
+      // Handle specific errors with user-friendly guidance
       if (error.code === 'auth/popup-blocked') {
-        alert("Sign-in popup was blocked by your browser. Please allow popups for this site or try a different browser.");
+        alert("Sign-in popup was blocked. Please enable popups for this site in your browser settings.");
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        // User closed the popup, no need for a loud alert
+        console.log("User closed the popup");
+      } else if (error.code === 'auth/network-request-failed') {
+        alert("Network error. Please check your internet connection.");
+      } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
+        alert("There is a configuration issue. If you are on mobile, try opening the app in a new tab (using the 'Open in new tab' button in the top right of the preview).");
       } else {
-        alert("Sign-in failed. Please try again.");
+        alert(`Sign-in failed: ${error.message}. If you are on mobile, try opening the app in a new tab.`);
       }
     }
   };
@@ -572,23 +585,29 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, loading, login, logout }}>
-      <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-stone-50 shadow-xl shadow-stone-200/50">
+      <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-black shadow-xl shadow-stone-900/50">
         {/* Header */}
-        <header className="bg-white border-b border-stone-100 sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
+        {!user && isMobile && (
+          <div className="bg-amber-900/20 border-b border-amber-900/30 px-6 py-2 flex items-center gap-2 text-amber-200 text-xs font-medium">
+            <Info size={14} className="shrink-0" />
+            <p>Having trouble signing in? Try opening this app in a new tab.</p>
+          </div>
+        )}
+        <header className="bg-black border-b border-stone-800 sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="bg-emerald-600 p-2 rounded-xl text-white">
               <MapPin size={24} />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-stone-900">LiftBook</h1>
+            <h1 className="text-2xl font-black tracking-tight text-white">LiftBook</h1>
           </div>
 
           <div className="flex items-center gap-2">
             <button 
               onClick={handleShare}
-              className="p-2 text-stone-500 hover:text-emerald-600 transition-colors relative"
+              className="p-2 text-stone-400 hover:text-emerald-400 transition-colors relative"
               title="Share App"
             >
-              {showShareFeedback ? <Check size={20} className="text-emerald-600" /> : <Share size={20} />}
+              {showShareFeedback ? <Check size={20} className="text-emerald-400" /> : <Share size={20} />}
               <AnimatePresence>
                 {showShareFeedback && (
                   <motion.span 
@@ -608,13 +627,13 @@ export default function App() {
               <img 
                 src={user.photoURL || ''} 
                 alt={user.displayName || ''} 
-                className="w-10 h-10 rounded-full border-2 border-emerald-100"
+                className="w-10 h-10 rounded-full border-2 border-emerald-600"
                 referrerPolicy="no-referrer"
               />
               <button 
                 type="button"
                 onClick={logout}
-                className="p-3 text-stone-400 hover:text-stone-600 transition-colors touch-manipulation active:scale-95"
+                className="p-3 text-stone-500 hover:text-stone-300 transition-colors touch-manipulation active:scale-95"
                 title="Logout"
               >
                 <LogOut size={20} />
@@ -624,7 +643,7 @@ export default function App() {
             <button 
               type="button"
               onClick={login}
-              className="flex items-center gap-2 bg-stone-900 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all touch-manipulation active:scale-95 shadow-lg shadow-stone-200"
+              className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all touch-manipulation active:scale-95 shadow-lg shadow-emerald-900/20"
             >
               <LogIn size={18} />
               Sign In
@@ -634,10 +653,10 @@ export default function App() {
         </header>
 
         {/* Main Feed */}
-        <main className="flex-1 p-6 space-y-6 pb-24">
+        <main className="flex-1 p-6 space-y-6 pb-24 bg-black">
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-stone-900">Recent Ride Requests</h2>
-            <p className="text-sm text-stone-500">Find someone to share a lift with.</p>
+            <h2 className="text-xl font-bold text-white">Recent Ride Requests</h2>
+            <p className="text-sm text-stone-400">Find someone to share a lift with.</p>
           </div>
 
           <AnimatePresence mode="popLayout">
@@ -647,10 +666,10 @@ export default function App() {
                 animate={{ opacity: 1 }}
                 className="text-center py-20 space-y-4"
               >
-                <div className="bg-stone-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-stone-400">
+                <div className="bg-stone-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-stone-600">
                   <Info size={32} />
                 </div>
-                <p className="text-stone-500 font-medium">No ride requests yet. Be the first!</p>
+                <p className="text-stone-400 font-medium">No ride requests yet. Be the first!</p>
               </motion.div>
             ) : (
               rides.map(ride => (
@@ -670,7 +689,7 @@ export default function App() {
         </main>
 
         {/* Footer Info */}
-        <footer className="p-6 text-center text-xs text-stone-400 border-t border-stone-100 bg-white">
+        <footer className="p-6 text-center text-xs text-stone-500 border-t border-stone-800 bg-black">
           <p>© 2026 LiftBook Community. Ride safe.</p>
         </footer>
       </div>
