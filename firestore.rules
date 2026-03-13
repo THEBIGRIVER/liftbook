@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: rides
+    // Fields:
+    //   - name: string (optional)
+    //   - whatsapp: string (required)
+    //   - gender: string (required, enum: Male, Female, Other)
+    //   - passenger_count: int (required)
+    //   - pickup_text: string (optional)
+    //   - pickup_lat: number (required)
+    //   - pickup_lng: number (required)
+    //   - destination_text: string (optional)
+    //   - destination_lat: number (required)
+    //   - destination_lng: number (required)
+    //   - offer_price: number (required)
+    //   - departure_time: string (required, ISO 8601)
+    //   - notes: string (optional)
+    //   - created_at: string (required, ISO 8601)
+    //   - uid: string (required)
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidRide(data) {
+      return data.whatsapp is string && data.whatsapp.size() >= 10 && data.whatsapp.size() <= 15 &&
+             data.gender in ['Male', 'Female', 'Other'] &&
+             data.passenger_count is int && data.passenger_count > 0 &&
+             data.pickup_lat is number && data.pickup_lng is number &&
+             data.destination_lat is number && data.destination_lng is number &&
+             data.offer_price is number && data.offer_price >= 0 &&
+             data.departure_time is string &&
+             data.created_at is string &&
+             data.uid is string;
+    }
+
+    match /rides/{rideId} {
+      // Anyone can read ride requests to facilitate the community board
+      allow read: if true;
+      
+      // Only authenticated users can create ride requests
+      allow create: if isAuthenticated() && 
+                      isValidRide(request.resource.data) && 
+                      request.resource.data.uid == request.auth.uid;
+      
+      // Only the owner can update or delete their ride request
+      allow update: if isAuthenticated() && 
+                      isOwner(resource.data.uid) && 
+                      isValidRide(request.resource.data) &&
+                      request.resource.data.uid == resource.data.uid;
+                      
+      allow delete: if isAuthenticated() && isOwner(resource.data.uid);
+    }
+    
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "LiftBook",
+  "description": "A community ride board for passengers to post requests and connect with drivers via WhatsApp.",
+  "requestFramePermissions": ["geolocation"]
+}

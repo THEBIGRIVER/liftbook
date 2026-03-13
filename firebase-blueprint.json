@@ -1,0 +1,33 @@
+{
+  "entities": {
+    "Ride": {
+      "title": "Ride",
+      "description": "A ride request posted by a passenger.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Passenger name (optional)" },
+        "whatsapp": { "type": "string", "description": "WhatsApp number (required)" },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"], "description": "Gender of the passenger" },
+        "passenger_count": { "type": "integer", "description": "Number of passengers" },
+        "pickup_text": { "type": "string", "description": "Pickup location landmark/text" },
+        "pickup_lat": { "type": "number", "description": "Pickup latitude" },
+        "pickup_lng": { "type": "number", "description": "Pickup longitude" },
+        "destination_text": { "type": "string", "description": "Destination location landmark/text" },
+        "destination_lat": { "type": "number", "description": "Destination latitude" },
+        "destination_lng": { "type": "number", "description": "Destination longitude" },
+        "offer_price": { "type": "number", "description": "Offer price in INR" },
+        "departure_time": { "type": "string", "format": "date-time", "description": "Departure time" },
+        "notes": { "type": "string", "description": "Optional ride notes" },
+        "created_at": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "uid": { "type": "string", "description": "User ID of the poster" }
+      },
+      "required": ["whatsapp", "gender", "passenger_count", "pickup_lat", "pickup_lng", "destination_lat", "destination_lng", "offer_price", "departure_time", "created_at", "uid"]
+    }
+  },
+  "firestore": {
+    "/rides/{rideId}": {
+      "schema": "Ride",
+      "description": "Collection of ride requests."
+    }
+  }
+}
