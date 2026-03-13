@@ -463,6 +463,7 @@ export default function App() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [showShareFeedback, setShowShareFeedback] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   useEffect(() => {
@@ -486,26 +487,22 @@ export default function App() {
   }, []);
 
   const login = async () => {
+    setLoginError(null);
     console.log("Starting login process with resolver...");
     try {
-      // Explicitly pass the resolver which can help in some mobile/iframe environments
       await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
       console.log("Login successful");
     } catch (error: any) {
       console.error("Login failed", error);
       
-      // Handle specific errors with user-friendly guidance
       if (error.code === 'auth/popup-blocked') {
-        alert("Sign-in popup was blocked. Please enable popups for this site in your browser settings.");
+        setLoginError("Sign-in popup was blocked. Please enable popups or open in a new tab.");
       } else if (error.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, no need for a loud alert
         console.log("User closed the popup");
-      } else if (error.code === 'auth/network-request-failed') {
-        alert("Network error. Please check your internet connection.");
-      } else if (error.code === 'auth/internal-error' || error.code === 'auth/unauthorized-domain') {
-        alert("There is a configuration issue. If you are on mobile, try opening the app in a new tab (using the 'Open in new tab' button in the top right of the preview).");
+      } else if (error.code === 'auth/operation-not-supported-in-this-environment' || error.code === 'auth/unauthorized-domain') {
+        setLoginError("This environment restricts sign-in. Please open the app in a new tab.");
       } else {
-        alert(`Sign-in failed: ${error.message}. If you are on mobile, try opening the app in a new tab.`);
+        setLoginError(`Sign-in failed. Try opening in a new tab.`);
       }
     }
   };
@@ -587,7 +584,22 @@ export default function App() {
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-black shadow-xl shadow-stone-900/50">
         {/* Header */}
-        {!user && isMobile && (
+        {loginError && (
+          <div className="bg-red-900/20 border-b border-red-900/30 px-6 py-3 flex items-center justify-between gap-3 text-red-200 text-xs font-medium">
+            <div className="flex items-center gap-2">
+              <AlertCircle size={14} className="shrink-0" />
+              <p>{loginError}</p>
+            </div>
+            <button 
+              onClick={() => window.open(window.location.href, '_blank')}
+              className="bg-red-500/20 hover:bg-red-500/30 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <Share size={12} />
+              Open in New Tab
+            </button>
+          </div>
+        )}
+        {!user && isMobile && !loginError && (
           <div className="bg-amber-900/20 border-b border-amber-900/30 px-6 py-2 flex items-center gap-2 text-amber-200 text-xs font-medium">
             <Info size={14} className="shrink-0" />
             <p>Having trouble signing in? Try opening this app in a new tab.</p>
@@ -640,14 +652,26 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <button 
-              type="button"
-              onClick={login}
-              className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-emerald-700 transition-all touch-manipulation active:scale-95 shadow-lg shadow-emerald-900/20"
-            >
-              <LogIn size={18} />
-              Sign In
-            </button>
+            <div className="flex items-center gap-2">
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => window.open(window.location.href, '_blank')}
+                  className="p-3 text-stone-400 hover:text-white transition-colors"
+                  title="Open in new tab for better sign-in"
+                >
+                  <Share size={18} />
+                </button>
+              )}
+              <button 
+                type="button"
+                onClick={login}
+                className="flex items-center gap-2 bg-white text-black px-5 py-3 rounded-xl font-bold text-sm hover:bg-stone-100 transition-all touch-manipulation active:scale-95 shadow-lg shadow-white/10 border border-stone-200"
+              >
+                <LogIn size={18} />
+                Sign In
+              </button>
+            </div>
           )}
           </div>
         </header>
