@@ -30,7 +30,9 @@ import {
   X, 
   ChevronRight,
   AlertCircle,
-  Info
+  Info,
+  Share,
+  Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -209,15 +211,17 @@ const RideCard = ({
         {isOwner && (
           <div className="flex gap-2">
             <button 
+              type="button"
               onClick={() => onEdit(ride)}
-              className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl transition-colors"
+              className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl transition-colors touch-manipulation active:scale-95"
               title="Edit Ride"
             >
               <Edit2 size={20} />
             </button>
             <button 
+              type="button"
               onClick={() => onDelete(ride.id)}
-              className="p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors"
+              className="p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors touch-manipulation active:scale-95"
               title="Delete Ride"
             >
               <Trash2 size={20} />
@@ -271,7 +275,7 @@ const RideForm = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-[70] bg-stone-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <motion.div 
         initial={{ y: "100%" }}
@@ -283,7 +287,11 @@ const RideForm = ({
           <h2 className="text-xl font-bold text-stone-900">
             {initialData ? 'Edit Ride Request' : 'Post Ride Request'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-stone-100 rounded-full transition-colors">
+          <button 
+            type="button"
+            onClick={onClose} 
+            className="p-2 hover:bg-stone-100 rounded-full transition-colors touch-manipulation active:scale-90"
+          >
             <X size={24} />
           </button>
         </div>
@@ -452,6 +460,7 @@ export default function App() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
+  const [showShareFeedback, setShowShareFeedback] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -474,10 +483,37 @@ export default function App() {
   }, []);
 
   const login = async () => {
+    console.log("Starting login process...");
     try {
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
+      console.log("Login successful");
+    } catch (error: any) {
       console.error("Login failed", error);
+      if (error.code === 'auth/popup-blocked') {
+        alert("Sign-in popup was blocked by your browser. Please allow popups for this site or try a different browser.");
+      } else {
+        alert("Sign-in failed. Please try again.");
+      }
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'LiftBook - Community Ride Board',
+      text: 'Check out LiftBook, a community ride board where you can find and offer lifts!',
+      url: window.location.origin,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.origin);
+        setShowShareFeedback(true);
+        setTimeout(() => setShowShareFeedback(false), 2000);
+      }
+    } catch (error) {
+      console.error("Error sharing", error);
     }
   };
 
@@ -545,7 +581,28 @@ export default function App() {
             </div>
             <h1 className="text-2xl font-black tracking-tight text-stone-900">LiftBook</h1>
           </div>
-          
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleShare}
+              className="p-2 text-stone-500 hover:text-emerald-600 transition-colors relative"
+              title="Share App"
+            >
+              {showShareFeedback ? <Check size={20} className="text-emerald-600" /> : <Share size={20} />}
+              <AnimatePresence>
+                {showShareFeedback && (
+                  <motion.span 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-stone-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap"
+                  >
+                    Link Copied!
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+            
           {user ? (
             <div className="flex items-center gap-3">
               <img 
@@ -555,8 +612,9 @@ export default function App() {
                 referrerPolicy="no-referrer"
               />
               <button 
+                type="button"
                 onClick={logout}
-                className="p-2 text-stone-400 hover:text-stone-600 transition-colors"
+                className="p-3 text-stone-400 hover:text-stone-600 transition-colors touch-manipulation active:scale-95"
                 title="Logout"
               >
                 <LogOut size={20} />
@@ -564,13 +622,15 @@ export default function App() {
             </div>
           ) : (
             <button 
+              type="button"
               onClick={login}
-              className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-stone-800 transition-colors"
+              className="flex items-center gap-2 bg-stone-900 text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-stone-800 transition-all touch-manipulation active:scale-95 shadow-lg shadow-stone-200"
             >
               <LogIn size={18} />
               Sign In
             </button>
           )}
+          </div>
         </header>
 
         {/* Main Feed */}
@@ -609,43 +669,45 @@ export default function App() {
           </AnimatePresence>
         </main>
 
-        {/* Floating Action Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            if (!user) {
-              login();
-            } else {
-              setEditingRide(null);
-              setIsFormOpen(true);
-            }
-          }}
-          className="fixed bottom-8 right-8 z-40 bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl shadow-emerald-200 flex items-center gap-2 font-bold"
-        >
-          <Plus size={24} />
-          <span className="hidden sm:inline">Post Ride</span>
-        </motion.button>
-
-        {/* Form Modal */}
-        <AnimatePresence>
-          {isFormOpen && (
-            <RideForm 
-              initialData={editingRide}
-              onClose={() => {
-                setIsFormOpen(false);
-                setEditingRide(null);
-              }}
-              onSubmit={handlePostRide}
-            />
-          )}
-        </AnimatePresence>
-
         {/* Footer Info */}
         <footer className="p-6 text-center text-xs text-stone-400 border-t border-stone-100 bg-white">
           <p>© 2026 LiftBook Community. Ride safe.</p>
         </footer>
       </div>
+
+      {/* Floating Action Button - Moved outside main container for better mobile responsiveness */}
+      <motion.button
+        type="button"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => {
+          console.log("FAB clicked");
+          if (!user) {
+            login();
+          } else {
+            setEditingRide(null);
+            setIsFormOpen(true);
+          }
+        }}
+        className="fixed bottom-8 right-8 z-[60] bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl shadow-emerald-200 flex items-center gap-2 font-bold cursor-pointer touch-manipulation active:bg-emerald-700"
+      >
+        <Plus size={24} />
+        <span className="hidden sm:inline">Post Ride</span>
+      </motion.button>
+
+      {/* Form Modal */}
+      <AnimatePresence>
+        {isFormOpen && (
+          <RideForm 
+            initialData={editingRide}
+            onClose={() => {
+              setIsFormOpen(false);
+              setEditingRide(null);
+            }}
+            onSubmit={handlePostRide}
+          />
+        )}
+      </AnimatePresence>
     </AuthContext.Provider>
   );
 }
