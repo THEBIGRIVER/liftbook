@@ -533,7 +533,8 @@ export default function App() {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   // Filtering & Sorting State
-  const [searchQuery, setSearchQuery] = useState('');
+  const [pickupSearch, setPickupSearch] = useState('');
+  const [destinationSearch, setDestinationSearch] = useState('');
   const [priceFilter, setPriceFilter] = useState<number>(5000);
   const [seatsFilter, setSeatsFilter] = useState<number>(1);
   const [sortBy, setSortBy] = useState<'latest' | 'price' | 'nearest'>('latest');
@@ -627,12 +628,11 @@ export default function App() {
 
   const filteredRides = rides
     .filter(ride => {
-      const matchesSearch = 
-        (ride.pickup_text?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (ride.destination_text?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      const matchesPickup = (ride.pickup_text?.toLowerCase() || '').includes(pickupSearch.toLowerCase());
+      const matchesDestination = (ride.destination_text?.toLowerCase() || '').includes(destinationSearch.toLowerCase());
       const matchesPrice = ride.offer_price <= priceFilter;
       const matchesSeats = ride.passenger_count >= seatsFilter;
-      return matchesSearch && matchesPrice && matchesSeats;
+      return matchesPickup && matchesDestination && matchesPrice && matchesSeats;
     })
     .sort((a, b) => {
       if (sortBy === 'latest') {
@@ -697,27 +697,6 @@ export default function App() {
     <AuthContext.Provider value={{ user, loading, login, logout }}>
       <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-black shadow-xl shadow-stone-900/50">
         {/* Header */}
-        {loginError && (
-          <div className="bg-red-900/20 border-b border-red-900/30 px-6 py-3 flex items-center justify-between gap-3 text-red-200 text-xs font-medium">
-            <div className="flex items-center gap-2">
-              <AlertCircle size={14} className="shrink-0" />
-              <p>{loginError}</p>
-            </div>
-            <button 
-              onClick={() => window.open(window.location.href, '_blank')}
-              className="bg-red-500/20 hover:bg-red-500/30 px-3 py-1 rounded-lg transition-colors flex items-center gap-1"
-            >
-              <Share size={12} />
-              Open in New Tab
-            </button>
-          </div>
-        )}
-        {!user && isMobile && !loginError && (
-          <div className="bg-amber-900/20 border-b border-amber-900/30 px-6 py-2 flex items-center gap-2 text-amber-200 text-xs font-medium">
-            <Info size={14} className="shrink-0" />
-            <p>Having trouble signing in? Try opening this app in a new tab.</p>
-          </div>
-        )}
         <header className="bg-black border-b border-stone-800 sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="bg-emerald-600 p-2 rounded-xl text-white">
@@ -766,16 +745,6 @@ export default function App() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              {isMobile && (
-                <button
-                  type="button"
-                  onClick={() => window.open(window.location.href, '_blank')}
-                  className="p-3 text-stone-400 hover:text-white transition-colors"
-                  title="Open in new tab for better sign-in"
-                >
-                  <Share size={18} />
-                </button>
-              )}
               <button 
                 type="button"
                 onClick={login}
@@ -813,15 +782,34 @@ export default function App() {
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden space-y-4 bg-stone-900/50 p-4 rounded-2xl border border-stone-800"
               >
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" size={18} />
-                  <input 
-                    type="text"
-                    placeholder="Search locations..."
-                    className="w-full pl-10 pr-4 py-2 bg-stone-900 border border-stone-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
+                    <input 
+                      type="text"
+                      placeholder="From (Pickup)..."
+                      className="w-full pl-10 pr-10 py-2 bg-stone-900 border border-stone-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={pickupSearch}
+                      onChange={(e) => setPickupSearch(e.target.value)}
+                    />
+                    <button 
+                      onClick={handleLocateMe}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-stone-500 hover:text-emerald-500 transition-colors"
+                      title="Use current location"
+                    >
+                      <Navigation size={14} />
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" size={18} />
+                    <input 
+                      type="text"
+                      placeholder="To (Destination)..."
+                      className="w-full pl-10 pr-4 py-2 bg-stone-900 border border-stone-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={destinationSearch}
+                      onChange={(e) => setDestinationSearch(e.target.value)}
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
