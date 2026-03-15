@@ -150,11 +150,11 @@ const MapPicker = ({
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-stone-300 flex items-center gap-1">
-        <MapPin size={16} className="text-emerald-500" />
+      <label className="text-sm font-semibold text-white/70 flex items-center gap-1">
+        <MapPin size={16} className="text-white" />
         {label} <span className="text-red-500">*</span>
       </label>
-      <div className="h-48 w-full rounded-xl overflow-hidden border border-stone-700 shadow-inner relative">
+      <div className="h-48 w-full rounded-xl overflow-hidden border-transparent bg-white/5 relative">
         <MapContainer 
           center={position || [22.5726, 88.3639]} 
           zoom={13} 
@@ -163,11 +163,11 @@ const MapPicker = ({
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
           <LocationMarker />
         </MapContainer>
-        <div className="absolute bottom-2 right-2 z-[1000] bg-stone-900/90 backdrop-blur px-2 py-1 rounded text-[10px] text-stone-400 border border-stone-700">
+        <div className="absolute bottom-2 right-2 z-[1000] bg-black/90 backdrop-blur px-2 py-1 rounded text-[10px] text-white/60 font-medium shadow-sm border border-white/10">
           Tap map to set location
         </div>
       </div>
@@ -199,35 +199,49 @@ const RideCard = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       onClick={() => setIsExpanded(!isExpanded)}
-      className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 space-y-4 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
     >
-      <div className="flex justify-between items-start">
-        <div className="space-y-1 flex-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-stone-500 text-xs uppercase tracking-wider font-semibold">
-              <Clock size={14} />
-              {format(new Date(ride.departure_time), 'MMM d, h:mm a')}
-            </div>
-            {ride.name && (
-              <span className="text-[10px] bg-stone-100 text-stone-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter">
-                {ride.name}
-              </span>
-            )}
-            {ride.uid === 'guest' && (
-              <span className="text-[10px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold uppercase tracking-tighter ml-2">
-                Guest
-              </span>
-            )}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-black font-bold text-lg">
+            {ride.name?.charAt(0) || (ride.uid === 'guest' ? 'G' : 'A')}
           </div>
-          <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2 flex-wrap">
-            <span className="text-emerald-600">{ride.pickup_text || "Current Location"}</span>
-            <ChevronRight size={16} className={`text-stone-300 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
-            <span className="text-blue-600">{ride.destination_text || "Destination"}</span>
-          </h3>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-black text-lg tracking-tight">{ride.name || 'Anonymous'}</h3>
+              {ride.uid === 'guest' && (
+                <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded uppercase tracking-widest font-bold">Guest</span>
+              )}
+            </div>
+            <div className="flex items-center gap-1 text-sm text-gray-500 font-medium">
+              <Clock size={14} />
+              {format(new Date(ride.created_at), 'MMM d, h:mm a')}
+            </div>
+          </div>
         </div>
-        <div className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full font-bold text-sm flex items-center gap-1 shrink-0">
-          <IndianRupee size={14} />
-          {ride.offer_price}
+        <div className="text-right">
+          <div className="text-2xl font-bold text-black tracking-tight flex items-center justify-end">
+            ₹{ride.offer_price}
+          </div>
+          <div className="text-[11px] text-gray-500 uppercase tracking-widest font-bold mt-1">
+            {ride.passenger_count} Seat{ride.passenger_count > 1 ? 's' : ''}
+          </div>
+        </div>
+      </div>
+
+      {/* Route Timeline */}
+      <div className="relative pl-6 space-y-5 my-6">
+        <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gray-300" />
+        <div className="relative">
+          <div className="absolute -left-[25px] top-1.5 w-2.5 h-2.5 rounded-full bg-black ring-4 ring-white" />
+          <p className="text-base font-semibold text-black leading-tight">{ride.pickup_text || "Current Location"}</p>
+          <p className="text-sm text-gray-500 font-medium mt-1 flex items-center gap-1">
+            {format(new Date(ride.departure_time), 'MMM d, h:mm a')}
+          </p>
+        </div>
+        <div className="relative">
+          <div className="absolute -left-[25px] top-1.5 w-2.5 h-2.5 bg-black ring-4 ring-white" />
+          <p className="text-base font-semibold text-black leading-tight">{ride.destination_text || "Destination"}</p>
         </div>
       </div>
 
@@ -237,70 +251,68 @@ const RideCard = ({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden space-y-4"
+            className="overflow-hidden"
           >
-            <div className="grid grid-cols-2 gap-4 py-2 border-y border-stone-50">
-              <div className="flex items-center gap-2 text-stone-600">
-                <Users size={18} className="text-stone-400" />
-                <span className="text-sm font-medium">{ride.passenger_count} Passengers</span>
+            <div className="pt-4 mt-4 border-t border-gray-100 space-y-4">
+              <div className="flex gap-3">
+                <div className="flex items-center gap-2 text-black bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium">
+                  <Users size={16} />
+                  {ride.passenger_count} Passengers
+                </div>
+                <div className="flex items-center gap-2 text-black bg-gray-100 px-3 py-2 rounded-lg text-sm font-medium">
+                  <div className={`w-2 h-2 rounded-full ${ride.gender === 'Male' ? 'bg-blue-500' : ride.gender === 'Female' ? 'bg-pink-500' : 'bg-purple-500'}`} />
+                  {ride.gender}
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-stone-600">
-                <div className={`w-2 h-2 rounded-full ${ride.gender === 'Male' ? 'bg-blue-400' : ride.gender === 'Female' ? 'bg-pink-400' : 'bg-purple-400'}`} />
-                <span className="text-sm font-medium">{ride.gender}</span>
-              </div>
-            </div>
 
-            {ride.notes && (
-              <p className="text-sm text-stone-500 italic">"{ride.notes}"</p>
-            )}
-
-            <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-              <a 
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-100"
-              >
-                <MessageCircle size={20} />
-                Contact on WhatsApp
-              </a>
-              
-              {isOwner && (
-                <div className="flex gap-2">
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(ride);
-                    }}
-                    className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl transition-colors touch-manipulation active:scale-95"
-                    title="Edit Ride"
-                  >
-                    <Edit2 size={20} />
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(ride.id);
-                    }}
-                    className="p-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors touch-manipulation active:scale-95"
-                    title="Delete Ride"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+              {ride.notes && (
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <p className="text-sm text-gray-600 leading-relaxed">"{ride.notes}"</p>
                 </div>
               )}
+
+              <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                <a 
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 bg-black hover:bg-gray-800 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
+                >
+                  <MessageCircle size={20} />
+                  Contact Driver
+                </a>
+                
+                {isOwner && (
+                  <div className="flex gap-2">
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(ride);
+                      }}
+                      className="p-3.5 bg-gray-100 hover:bg-gray-200 text-black rounded-xl transition-colors"
+                      title="Edit Ride"
+                    >
+                      <Edit2 size={20} />
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(ride.id);
+                      }}
+                      className="p-3.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors"
+                      title="Delete Ride"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-      
-      {!isExpanded && (
-        <div className="text-[10px] text-stone-400 text-center font-medium uppercase tracking-widest pt-1 group-hover:text-emerald-500 transition-colors">
-          Tap to see details
-        </div>
-      )}
     </motion.div>
   );
 };
@@ -348,22 +360,22 @@ const RideForm = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[70] bg-stone-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
     >
       <motion.div 
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
-        className="bg-stone-900 w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
+        className="bg-[#121212] w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/10"
       >
-        <div className="p-4 border-b border-stone-800 flex justify-between items-center sticky top-0 bg-stone-900 z-10">
+        <div className="p-4 border-b border-white/10 flex justify-between items-center sticky top-0 bg-[#121212] z-10">
           <h2 className="text-xl font-bold text-white">
             {initialData ? 'Edit Ride Request' : 'Post Ride Request'}
           </h2>
           <button 
             type="button"
             onClick={onClose} 
-            className="p-2 hover:bg-stone-800 rounded-full transition-colors touch-manipulation active:scale-90 text-stone-400"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors touch-manipulation active:scale-90 text-white/50"
           >
             <X size={24} />
           </button>
@@ -372,25 +384,25 @@ const RideForm = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto">
           {showSafety ? (
             <div className="space-y-6 py-4">
-              <div className="bg-amber-900/20 border border-amber-900/30 p-4 rounded-2xl flex gap-3">
+              <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex gap-3">
                 <AlertCircle className="text-amber-500 shrink-0" />
                 <div className="space-y-2">
-                  <h3 className="font-bold text-amber-200">Safety Disclaimer</h3>
-                  <p className="text-sm text-amber-100 leading-relaxed">
+                  <h3 className="font-bold text-amber-500">Safety Disclaimer</h3>
+                  <p className="text-sm text-amber-500/80 leading-relaxed">
                     LiftBook only displays ride requests posted by users. LiftBook does not arrange rides and does not handle payments. Users are responsible for their own safety and agreements.
                   </p>
                 </div>
               </div>
               <button 
                 type="submit"
-                className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 transition-all"
+                className="w-full bg-white text-black py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all"
               >
                 I Understand, Post Ride
               </button>
               <button 
                 type="button"
                 onClick={() => setShowSafety(false)}
-                className="w-full text-stone-400 font-medium py-2"
+                className="w-full text-white/50 font-medium py-2 hover:text-white transition-colors"
               >
                 Go Back
               </button>
@@ -400,23 +412,23 @@ const RideForm = ({
               {/* Basic Info */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-300">Your Name <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-semibold text-white/70">Your Name <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="text"
                     placeholder="e.g. John Doe"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium placeholder:text-white/40"
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-300">WhatsApp Number <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-semibold text-white/70">WhatsApp Number <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="tel"
                     placeholder="e.g. 9876543210"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium placeholder:text-white/40"
                     value={formData.whatsapp}
                     onChange={e => setFormData({...formData, whatsapp: e.target.value})}
                   />
@@ -424,26 +436,26 @@ const RideForm = ({
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-stone-300">Gender <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-semibold text-white/70">Gender <span className="text-red-500">*</span></label>
                     <select 
-                      className="w-full px-4 py-3 rounded-xl border border-stone-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-stone-800 text-white"
+                      className="w-full px-4 py-3 rounded-xl border-transparent focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all bg-white/5 text-white font-medium"
                       value={formData.gender}
                       onChange={e => setFormData({...formData, gender: e.target.value})}
                     >
-                      <option>Male</option>
-                      <option>Female</option>
-                      <option>Other</option>
+                      <option className="bg-[#121212]">Male</option>
+                      <option className="bg-[#121212]">Female</option>
+                      <option className="bg-[#121212]">Other</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-stone-300">Passengers <span className="text-red-500">*</span></label>
+                    <label className="text-sm font-semibold text-white/70">Passengers <span className="text-red-500">*</span></label>
                     <select 
-                      className="w-full px-4 py-3 rounded-xl border border-stone-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all bg-stone-800 text-white"
+                      className="w-full px-4 py-3 rounded-xl border-transparent focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all bg-white/5 text-white font-medium"
                       value={formData.passenger_count}
                       onChange={e => setFormData({...formData, passenger_count: parseInt(e.target.value)})}
                     >
                       {[1, 2, 3, 4, 5, 6, 10, 12, 20].map(n => (
-                        <option key={n} value={n}>{n}</option>
+                        <option key={n} value={n} className="bg-[#121212]">{n}</option>
                       ))}
                     </select>
                   </div>
@@ -461,7 +473,7 @@ const RideForm = ({
                   <input 
                     type="text"
                     placeholder="Pickup Landmark (Optional)"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium placeholder:text-white/40"
                     value={formData.pickup_text}
                     onChange={e => setFormData({...formData, pickup_text: e.target.value})}
                   />
@@ -476,7 +488,7 @@ const RideForm = ({
                   <input 
                     type="text"
                     placeholder="Destination Landmark (Optional)"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium placeholder:text-white/40"
                     value={formData.destination_text}
                     onChange={e => setFormData({...formData, destination_text: e.target.value})}
                   />
@@ -486,25 +498,25 @@ const RideForm = ({
               {/* Offer & Time */}
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-300">Offer Price (₹) <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-semibold text-white/70">Offer Price (₹) <span className="text-red-500">*</span></label>
                   <div className="relative">
-                    <IndianRupee size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" />
+                    <IndianRupee size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50" />
                     <input 
                       required
                       type="number"
                       min="0"
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium"
                       value={formData.offer_price}
                       onChange={e => setFormData({...formData, offer_price: parseFloat(e.target.value)})}
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-stone-300">Departure Time <span className="text-red-500">*</span></label>
+                  <label className="text-sm font-semibold text-white/70">Departure Time <span className="text-red-500">*</span></label>
                   <input 
                     required
                     type="datetime-local"
-                    className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium [color-scheme:dark]"
                     value={formData.departure_time}
                     onChange={e => setFormData({...formData, departure_time: e.target.value})}
                   />
@@ -513,10 +525,10 @@ const RideForm = ({
 
               {/* Notes */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-stone-300">Ride Notes (Optional)</label>
+                <label className="text-sm font-semibold text-white/70">Ride Notes (Optional)</label>
                 <textarea 
                   placeholder="e.g. Airport drop, Urgent ride"
-                  className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all h-24 resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all h-24 resize-none font-medium placeholder:text-white/40"
                   value={formData.notes}
                   onChange={e => setFormData({...formData, notes: e.target.value})}
                 />
@@ -524,7 +536,7 @@ const RideForm = ({
 
               <button 
                 type="submit"
-                className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 transition-all"
+                className="w-full bg-white text-black py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all"
               >
                 {initialData ? 'Update Ride' : 'Post Ride'}
               </button>
@@ -568,16 +580,16 @@ const LoginModal = ({
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95, y: 20 }}
         onClick={e => e.stopPropagation()}
-        className="bg-stone-900 rounded-3xl w-full max-w-md overflow-hidden border border-stone-800 shadow-2xl"
+        className="bg-[#121212] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-white/10"
       >
-        <div className="p-6 border-b border-stone-800 flex justify-between items-center bg-stone-900/50">
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#121212]">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <LogIn size={20} className="text-emerald-500" />
+            <LogIn size={20} className="text-white" />
             Sign In
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-white bg-stone-800 hover:bg-stone-700 rounded-full transition-colors"
+            className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-colors"
           >
             <X size={20} />
           </button>
@@ -586,23 +598,23 @@ const LoginModal = ({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-300">Your Name <span className="text-red-500">*</span></label>
+              <label className="text-sm font-semibold text-white/70">Your Name <span className="text-red-500">*</span></label>
               <input 
                 required
                 type="text"
                 placeholder="e.g. John Doe"
-                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium placeholder:text-white/40"
                 value={name}
                 onChange={e => setName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-stone-300">WhatsApp Number <span className="text-red-500">*</span></label>
+              <label className="text-sm font-semibold text-white/70">WhatsApp Number <span className="text-red-500">*</span></label>
               <input 
                 required
                 type="tel"
                 placeholder="e.g. 9876543210"
-                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border-transparent bg-white/5 text-white focus:ring-2 focus:ring-white focus:bg-white/10 outline-none transition-all font-medium placeholder:text-white/40"
                 value={whatsapp}
                 onChange={e => setWhatsapp(e.target.value)}
               />
@@ -612,7 +624,7 @@ const LoginModal = ({
           <button 
             type="submit"
             disabled={!name.trim() || whatsapp.trim().length < 10}
-            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full bg-white text-black py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             Continue
           </button>
@@ -798,11 +810,11 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full"
+          className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full"
         />
       </div>
     );
@@ -810,30 +822,27 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, mockProfile, loading, login, logout }}>
-      <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-black shadow-xl shadow-stone-900/50">
+      <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-black shadow-2xl shadow-white/5 relative">
         {/* Header */}
-        <header className="bg-black border-b border-stone-800 sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-600 p-2 rounded-xl text-white">
-              <MapPin size={24} />
-            </div>
-            <h1 className="text-2xl font-black tracking-tight text-white">LiftBook</h1>
+        <header className="sticky top-0 z-40 px-6 py-4 flex justify-between items-center bg-black border-b border-white/10 shadow-sm">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold tracking-tighter text-white">LiftBook</h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button 
               onClick={handleShare}
-              className="p-2 text-stone-400 hover:text-emerald-400 transition-colors relative"
+              className="p-2.5 text-white hover:bg-white/10 rounded-full transition-all relative"
               title="Share App"
             >
-              {showShareFeedback ? <Check size={20} className="text-emerald-400" /> : <Share size={20} />}
+              {showShareFeedback ? <Check size={20} className="text-white" /> : <Share size={20} />}
               <AnimatePresence>
                 {showShareFeedback && (
                   <motion.span 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-stone-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap"
+                    className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white text-black font-bold text-[10px] px-3 py-1.5 rounded-full whitespace-nowrap shadow-xl"
                   >
                     Link Copied!
                   </motion.span>
@@ -842,14 +851,14 @@ export default function App() {
             </button>
             
           {mockProfile ? (
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-emerald-600 bg-stone-800 flex items-center justify-center text-emerald-500 font-bold uppercase">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold uppercase">
                 {mockProfile.name.charAt(0)}
               </div>
               <button 
                 type="button"
                 onClick={logout}
-                className="p-3 text-stone-500 hover:text-stone-300 transition-colors touch-manipulation active:scale-95"
+                className="p-2.5 text-white hover:bg-white/10 rounded-full transition-all touch-manipulation active:scale-95"
                 title="Logout"
               >
                 <LogOut size={20} />
@@ -860,7 +869,7 @@ export default function App() {
               <button 
                 type="button"
                 onClick={login}
-                className="flex items-center gap-2 bg-white text-black px-5 py-3 rounded-xl font-bold text-sm hover:bg-stone-100 transition-all touch-manipulation active:scale-95 shadow-lg shadow-white/10 border border-stone-200"
+                className="flex items-center gap-2 bg-white text-black px-5 py-2.5 rounded-full font-bold text-sm hover:bg-gray-200 transition-all touch-manipulation active:scale-95"
               >
                 <LogIn size={18} />
                 Sign In
@@ -871,15 +880,14 @@ export default function App() {
         </header>
 
         {/* Main Feed */}
-        <main className="flex-1 p-6 space-y-6 pb-24 bg-black">
+        <main className="flex-1 p-6 space-y-6 pb-32">
           <div className="flex justify-between items-end">
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Recent Ride Requests</h2>
-              <p className="text-sm text-stone-400">Find someone to share a lift with.</p>
+            <div className="space-y-1">
+              <h2 className="text-3xl font-bold text-white tracking-tight">Activity</h2>
             </div>
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-emerald-600 text-white' : 'bg-stone-900 text-stone-400 hover:text-white'}`}
+              className={`p-2.5 rounded-full transition-all ${showFilters ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
             >
               <SlidersHorizontal size={20} />
             </button>
@@ -892,66 +900,72 @@ export default function App() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden space-y-4 bg-stone-900/50 p-4 rounded-2xl border border-stone-800"
+                className="overflow-hidden space-y-4 bg-[#121212] p-5 rounded-2xl border border-white/10"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500" size={18} />
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input 
                       type="text"
                       placeholder="From (Pickup)..."
-                      className="w-full pl-10 pr-10 py-2 bg-stone-900 border border-stone-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full pl-11 pr-10 py-3 bg-white/5 border-transparent rounded-xl text-white outline-none focus:ring-2 focus:ring-white focus:bg-white/10 transition-all placeholder:text-white/40 text-sm font-medium"
                       value={pickupSearch}
                       onChange={(e) => setPickupSearch(e.target.value)}
                     />
                     <button 
                       onClick={handleLocateMe}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-stone-500 hover:text-emerald-500 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-white/40 hover:text-white transition-colors"
                       title="Use current location"
                     >
-                      <Navigation size={14} />
+                      <Navigation size={16} />
                     </button>
                   </div>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500" size={18} />
+                    <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" size={18} />
                     <input 
                       type="text"
                       placeholder="To (Destination)..."
-                      className="w-full pl-10 pr-4 py-2 bg-stone-900 border border-stone-700 rounded-xl text-white outline-none focus:ring-2 focus:ring-emerald-500"
+                      className="w-full pl-11 pr-4 py-3 bg-white/5 border-transparent rounded-xl text-white outline-none focus:ring-2 focus:ring-white focus:bg-white/10 transition-all placeholder:text-white/40 text-sm font-medium"
                       value={destinationSearch}
                       onChange={(e) => setDestinationSearch(e.target.value)}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Max Price (₹{priceFilter})</label>
+                <div className="grid grid-cols-2 gap-6 pt-2">
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-white/50 uppercase tracking-widest flex justify-between">
+                      <span>Max Price</span>
+                      <span className="text-white font-bold">₹{priceFilter}</span>
+                    </label>
                     <input 
                       type="range"
                       min="0"
                       max="5000"
                       step="100"
-                      className="w-full accent-emerald-600"
+                      className="w-full accent-white"
                       value={priceFilter}
                       onChange={(e) => setPriceFilter(parseInt(e.target.value))}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Min Seats ({seatsFilter}+)</label>
+                  <div className="space-y-3">
+                    <label className="text-xs font-bold text-white/50 uppercase tracking-widest flex justify-between">
+                      <span>Min Seats</span>
+                      <span className="text-white font-bold">{seatsFilter}+</span>
+                    </label>
                     <input 
                       type="range"
                       min="1"
                       max="10"
-                      className="w-full accent-emerald-600"
+                      className="w-full accent-white"
                       value={seatsFilter}
                       onChange={(e) => setSeatsFilter(parseInt(e.target.value))}
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <div className="flex-1 flex bg-stone-900 rounded-xl p-1 border border-stone-800">
+                <div className="flex gap-3 pt-2">
+                  <div className="flex-1 flex bg-white/5 rounded-xl p-1">
                     {(['latest', 'price', 'nearest'] as const).map((option) => (
                       <button
                         key={option}
@@ -961,7 +975,7 @@ export default function App() {
                           }
                           setSortBy(option);
                         }}
-                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all capitalize ${sortBy === option ? 'bg-emerald-600 text-white' : 'text-stone-500 hover:text-stone-300'}`}
+                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all capitalize ${sortBy === option ? 'bg-white text-black shadow-sm' : 'text-white/50 hover:text-white'}`}
                       >
                         {option}
                       </button>
@@ -970,7 +984,7 @@ export default function App() {
                   {sortBy === 'nearest' && !userLocation && (
                     <button 
                       onClick={handleLocateMe}
-                      className="p-2 bg-stone-900 text-emerald-500 rounded-xl border border-stone-800 hover:bg-stone-800 transition-colors"
+                      className="p-3 bg-white/5 text-white rounded-xl hover:bg-white/10 transition-colors"
                       title="Get Current Location"
                     >
                       <Navigation size={20} />
@@ -986,12 +1000,12 @@ export default function App() {
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-20 space-y-4"
+                className="text-center py-32 space-y-6"
               >
-                <div className="bg-stone-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto text-stone-600">
-                  <Info size={32} />
+                <div className="bg-white/5 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-white/40">
+                  <Info size={40} strokeWidth={1.5} />
                 </div>
-                <p className="text-stone-400 font-medium">No ride requests match your filters.</p>
+                <p className="text-white/50 font-medium text-sm">No ride requests match your filters.</p>
               </motion.div>
             ) : (
               filteredRides.map(ride => (
@@ -1011,12 +1025,12 @@ export default function App() {
         </main>
 
         {/* Footer Info */}
-        <footer className="p-6 text-center text-xs text-stone-500 border-t border-stone-800 bg-black">
-          <p>© 2026 LiftBook Community. Ride safe.</p>
+        <footer className="p-8 text-center text-[10px] text-white/40 uppercase tracking-widest font-bold border-t border-white/10 bg-black">
+          <p>© 2026 LiftBook. Ride safe.</p>
         </footer>
       </div>
 
-      {/* Floating Action Button - Moved outside main container for better mobile responsiveness */}
+      {/* Floating Action Button */}
       <motion.button
         type="button"
         whileHover={{ scale: 1.05 }}
@@ -1026,9 +1040,9 @@ export default function App() {
           setEditingRide(null);
           setIsFormOpen(true);
         }}
-        className="fixed bottom-8 right-8 z-[60] bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl shadow-emerald-200 flex items-center gap-2 font-bold cursor-pointer touch-manipulation active:bg-emerald-700"
+        className="fixed bottom-8 right-8 z-[60] bg-white text-black px-6 py-4 rounded-full shadow-xl shadow-white/10 flex items-center gap-2 font-bold cursor-pointer touch-manipulation active:bg-gray-200"
       >
-        <Plus size={24} />
+        <Plus size={20} strokeWidth={3} />
         <span className="hidden sm:inline">Post Ride</span>
       </motion.button>
 
