@@ -285,7 +285,7 @@ const RideCard = ({
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
+                    className="flex-1 bg-[#FF0000] hover:bg-[#CC0000] text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
                   >
                     <MessageCircle size={20} />
                     WhatsApp
