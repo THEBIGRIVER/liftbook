@@ -36,7 +36,8 @@ import {
   Search,
   SlidersHorizontal,
   ArrowUpDown,
-  Navigation
+  Navigation,
+  Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -272,15 +273,24 @@ const RideCard = ({
               )}
 
               <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
-                <a 
-                  href={whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 bg-black hover:bg-gray-800 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
-                >
-                  <MessageCircle size={20} />
-                  Contact Driver
-                </a>
+                <div className="flex gap-2 flex-1">
+                  <a 
+                    href={`tel:${ride.whatsapp}`}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-black py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
+                  >
+                    <Phone size={20} />
+                    Call
+                  </a>
+                  <a 
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
+                  >
+                    <MessageCircle size={20} />
+                    WhatsApp
+                  </a>
+                </div>
                 
                 {isOwner && (
                   <div className="flex gap-2">
