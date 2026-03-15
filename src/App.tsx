@@ -395,7 +395,7 @@ const RideForm = ({
               </div>
               <button 
                 type="submit"
-                className="w-full bg-white text-black py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all"
+                className="w-full bg-[#FF0000] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#CC0000] transition-all"
               >
                 I Understand, Post Ride
               </button>
@@ -536,7 +536,7 @@ const RideForm = ({
 
               <button 
                 type="submit"
-                className="w-full bg-white text-black py-4 rounded-2xl font-bold text-lg hover:bg-gray-200 transition-all"
+                className="w-full bg-[#FF0000] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#CC0000] transition-all"
               >
                 {initialData ? 'Update Ride' : 'Post Ride'}
               </button>
@@ -826,7 +826,10 @@ export default function App() {
         {/* Header */}
         <header className="sticky top-0 z-40 px-6 py-4 flex justify-between items-center bg-black border-b border-white/10 shadow-sm">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tighter text-white">LiftBook</h1>
+            <h1 className="text-2xl font-bold tracking-tighter text-white flex items-center gap-1">
+              <span className="bg-[#FF0000] text-white w-8 h-8 flex items-center justify-center rounded-lg">L</span>
+              iftBook
+            </h1>
           </div>
 
           <div className="flex items-center gap-3">
@@ -1040,10 +1043,10 @@ export default function App() {
           setEditingRide(null);
           setIsFormOpen(true);
         }}
-        className="fixed bottom-8 right-8 z-[60] bg-white text-black px-6 py-4 rounded-full shadow-xl shadow-white/10 flex items-center gap-2 font-bold cursor-pointer touch-manipulation active:bg-gray-200"
+        className="fixed bottom-8 right-8 z-[60] bg-[#FF0000] text-white px-6 py-4 rounded-full shadow-xl shadow-[#FF0000]/20 flex items-center gap-2 font-bold cursor-pointer touch-manipulation active:bg-[#CC0000]"
       >
         <Plus size={20} strokeWidth={3} />
-        <span className="hidden sm:inline">Post Ride</span>
+        <span>Post Ride</span>
       </motion.button>
 
       {/* Form Modal */}
