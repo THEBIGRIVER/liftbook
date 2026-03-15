@@ -3,6 +3,7 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
+  signInAnonymously,
   signOut, 
   onAuthStateChanged, 
   User,
@@ -24,6 +25,7 @@ setPersistence(auth, browserLocalPersistence).catch(console.error);
 
 export { 
   signInWithPopup, 
+  signInAnonymously,
   signOut, 
   onAuthStateChanged, 
   collection, 

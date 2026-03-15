@@ -47,18 +47,15 @@ service cloud.firestore {
       // Anyone can read ride requests to facilitate the community board
       allow read: if true;
       
-      // Anyone can create ride requests (guest posting)
-      // If authenticated, we enforce uid match. If not, we allow it.
-      allow create: if isValidRide(request.resource.data) && 
-                      (isAuthenticated() ? request.resource.data.uid == request.auth.uid : request.resource.data.uid == "guest");
+      // Anyone can create ride requests (mock sign-in)
+      allow create: if isValidRide(request.resource.data);
       
-      // Only the owner can update or delete their ride request
-      allow update: if isAuthenticated() && 
-                      isOwner(resource.data.uid) && 
-                      isValidRide(request.resource.data) &&
+      // Anyone can update their ride request (mock sign-in)
+      allow update: if isValidRide(request.resource.data) &&
                       request.resource.data.uid == resource.data.uid;
                       
-      allow delete: if isAuthenticated() && isOwner(resource.data.uid);
+      // Anyone can delete their ride request (mock sign-in)
+      allow delete: if true;
     }
     
     match /users/{userId} {

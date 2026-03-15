@@ -2,8 +2,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { 
   auth, 
   db, 
-  googleProvider, 
-  signInWithPopup, 
+  signInAnonymously,
   signOut, 
   onAuthStateChanged, 
   collection, 
@@ -15,7 +14,6 @@ import {
   query, 
   orderBy,
   Timestamp,
-  browserPopupRedirectResolver,
   User
 } from './firebase';
 import { 
@@ -82,15 +80,23 @@ interface Ride {
 
 // --- Context ---
 
+interface MockProfile {
+  name: string;
+  whatsapp: string;
+  uid: string;
+}
+
 const AuthContext = createContext<{
   user: User | null;
+  mockProfile: MockProfile | null;
   loading: boolean;
-  login: () => Promise<void>;
+  login: () => void;
   logout: () => Promise<void>;
 }>({
   user: null,
+  mockProfile: null,
   loading: true,
-  login: async () => {},
+  login: () => {},
   logout: async () => {},
 });
 
@@ -308,9 +314,10 @@ const RideForm = ({
   onClose: () => void;
   onSubmit: (data: Partial<Ride>) => void;
 }) => {
+  const { mockProfile } = useAuth();
   const [formData, setFormData] = useState<Partial<Ride>>(initialData || {
-    name: '',
-    whatsapp: '',
+    name: mockProfile?.name || '',
+    whatsapp: mockProfile?.whatsapp || '',
     gender: 'Male',
     passenger_count: 1,
     pickup_text: '',
@@ -531,11 +538,97 @@ const RideForm = ({
 
 // --- Main App ---
 
+const LoginModal = ({ 
+  onClose, 
+  onLogin 
+}: { 
+  onClose: () => void; 
+  onLogin: (name: string, whatsapp: string) => void;
+}) => {
+  const [name, setName] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim() && whatsapp.trim().length >= 10) {
+      onLogin(name.trim(), whatsapp.trim());
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <motion.div 
+        initial={{ scale: 0.95, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.95, y: 20 }}
+        onClick={e => e.stopPropagation()}
+        className="bg-stone-900 rounded-3xl w-full max-w-md overflow-hidden border border-stone-800 shadow-2xl"
+      >
+        <div className="p-6 border-b border-stone-800 flex justify-between items-center bg-stone-900/50">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <LogIn size={20} className="text-emerald-500" />
+            Sign In
+          </h2>
+          <button 
+            onClick={onClose}
+            className="p-2 text-stone-400 hover:text-white bg-stone-800 hover:bg-stone-700 rounded-full transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-300">Your Name <span className="text-red-500">*</span></label>
+              <input 
+                required
+                type="text"
+                placeholder="e.g. John Doe"
+                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                value={name}
+                onChange={e => setName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-300">WhatsApp Number <span className="text-red-500">*</span></label>
+              <input 
+                required
+                type="tel"
+                placeholder="e.g. 9876543210"
+                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-800 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                value={whatsapp}
+                onChange={e => setWhatsapp(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <button 
+            type="submit"
+            disabled={!name.trim() || whatsapp.trim().length < 10}
+            className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-emerald-900/20 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            Continue
+          </button>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [mockProfile, setMockProfile] = useState<MockProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [rides, setRides] = useState<Ride[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [editingRide, setEditingRide] = useState<Ride | null>(null);
   const [showShareFeedback, setShowShareFeedback] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -551,6 +644,15 @@ export default function App() {
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
+    const savedProfile = localStorage.getItem('liftbook_mock_profile');
+    if (savedProfile) {
+      try {
+        setMockProfile(JSON.parse(savedProfile));
+      } catch (e) {
+        console.error("Failed to parse mock profile");
+      }
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -570,24 +672,24 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  const login = async () => {
-    setLoginError(null);
-    console.log("Starting login process with resolver...");
+  const login = () => {
+    setIsLoginModalOpen(true);
+  };
+
+  const handleMockLogin = async (name: string, whatsapp: string) => {
     try {
-      await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
-      console.log("Login successful");
-    } catch (error: any) {
-      console.error("Login failed", error);
-      
-      if (error.code === 'auth/popup-blocked') {
-        setLoginError("Sign-in popup was blocked. Please enable popups or open in a new tab.");
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        console.log("User closed the popup");
-      } else if (error.code === 'auth/operation-not-supported-in-this-environment' || error.code === 'auth/unauthorized-domain') {
-        setLoginError("This environment restricts sign-in. Please open the app in a new tab.");
-      } else {
-        setLoginError(`Sign-in failed. Try opening in a new tab.`);
+      let mockUid = localStorage.getItem('liftbook_mock_uid');
+      if (!mockUid) {
+        mockUid = 'mock_' + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('liftbook_mock_uid', mockUid);
       }
+      const profile = { name, whatsapp, uid: mockUid };
+      setMockProfile(profile);
+      localStorage.setItem('liftbook_mock_profile', JSON.stringify(profile));
+      setIsLoginModalOpen(false);
+    } catch (error) {
+      console.error("Login failed", error);
+      setLoginError("Sign-in failed. Please try again.");
     }
   };
 
@@ -613,7 +715,11 @@ export default function App() {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      if (user) {
+        await signOut(auth);
+      }
+      setMockProfile(null);
+      localStorage.removeItem('liftbook_mock_profile');
     } catch (error) {
       console.error("Logout failed", error);
     }
@@ -668,7 +774,7 @@ export default function App() {
       } else {
         await addDoc(collection(db, 'rides'), {
           ...data,
-          uid: user?.uid || 'guest',
+          uid: mockProfile?.uid || 'guest',
           created_at: new Date().toISOString()
         });
       }
@@ -703,7 +809,7 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, mockProfile, loading, login, logout }}>
       <div className="min-h-screen flex flex-col max-w-2xl mx-auto bg-black shadow-xl shadow-stone-900/50">
         {/* Header */}
         <header className="bg-black border-b border-stone-800 sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
@@ -735,14 +841,11 @@ export default function App() {
               </AnimatePresence>
             </button>
             
-          {user ? (
+          {mockProfile ? (
             <div className="flex items-center gap-3">
-              <img 
-                src={user.photoURL || ''} 
-                alt={user.displayName || ''} 
-                className="w-10 h-10 rounded-full border-2 border-emerald-600"
-                referrerPolicy="no-referrer"
-              />
+              <div className="w-10 h-10 rounded-full border-2 border-emerald-600 bg-stone-800 flex items-center justify-center text-emerald-500 font-bold uppercase">
+                {mockProfile.name.charAt(0)}
+              </div>
               <button 
                 type="button"
                 onClick={logout}
@@ -895,7 +998,7 @@ export default function App() {
                 <RideCard 
                   key={ride.id} 
                   ride={ride} 
-                  isOwner={user?.uid === ride.uid}
+                  isOwner={mockProfile?.uid === ride.uid}
                   onEdit={(r) => {
                     setEditingRide(r);
                     setIsFormOpen(true);
@@ -939,6 +1042,15 @@ export default function App() {
               setEditingRide(null);
             }}
             onSubmit={handlePostRide}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isLoginModalOpen && (
+          <LoginModal 
+            onClose={() => setIsLoginModalOpen(false)} 
+            onLogin={handleMockLogin} 
           />
         )}
       </AnimatePresence>
