@@ -98,6 +98,15 @@ const useAuth = () => useContext(AuthContext);
 
 // --- Utils ---
 
+const formatWhatsAppNumber = (number: string) => {
+  let cleanNumber = number.replace(/\D/g, '');
+  cleanNumber = cleanNumber.replace(/^0+/, '');
+  if (cleanNumber.length === 10) {
+    cleanNumber = '91' + cleanNumber;
+  }
+  return cleanNumber;
+};
+
 const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
   const R = 6371; // Radius of the earth in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -173,7 +182,7 @@ const RideCard = ({
   key?: React.Key;
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const whatsappUrl = `https://wa.me/${ride.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/${formatWhatsAppNumber(ride.whatsapp)}?text=${encodeURIComponent(
     `Hi, I saw your LiftBook ride request from ${ride.pickup_text || 'your location'} to ${ride.destination_text || 'destination'}. Are you still looking for a lift?`
   )}`;
 
