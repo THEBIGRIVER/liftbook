@@ -40,7 +40,7 @@ import {
   Phone
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
@@ -176,6 +176,82 @@ const MapPicker = ({
   );
 };
 
+const ConfirmModal = ({ 
+  isOpen, 
+  title, 
+  message, 
+  onConfirm, 
+  onCancel 
+}: { 
+  isOpen: boolean; 
+  title: string; 
+  message: string; 
+  onConfirm: () => void; 
+  onCancel: () => void; 
+}) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-[#121212] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+      >
+        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+        <p className="text-white/70 mb-6">{message}</p>
+        <div className="flex gap-3">
+          <button 
+            onClick={onCancel}
+            className="flex-1 py-3 rounded-xl font-semibold text-white bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={onConfirm}
+            className="flex-1 py-3 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors"
+          >
+            Confirm
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const AlertModal = ({ 
+  isOpen, 
+  title, 
+  message, 
+  onClose 
+}: { 
+  isOpen: boolean; 
+  title: string; 
+  message: string; 
+  onClose: () => void; 
+}) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-[#121212] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
+      >
+        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+        <p className="text-white/70 mb-6">{message}</p>
+        <button 
+          onClick={onClose}
+          className="w-full py-3 rounded-xl font-semibold text-black bg-white hover:bg-gray-200 transition-colors"
+        >
+          OK
+        </button>
+      </motion.div>
+    </div>
+  );
+};
+
 const RideCard = ({ 
   ride, 
   onEdit, 
@@ -285,7 +361,7 @@ const RideCard = ({
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-[#FF0000] hover:bg-[#CC0000] text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
+                    className="flex-1 bg-black hover:bg-gray-800 text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors text-base"
                   >
                     <MessageCircle size={20} />
                     WhatsApp
@@ -665,6 +741,10 @@ export default function App() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Modal States
+  const [alertModal, setAlertModal] = useState<{isOpen: boolean; title: string; message: string}>({isOpen: false, title: '', message: ''});
+  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean; title: string; message: string; onConfirm: () => void}>({isOpen: false, title: '', message: '', onConfirm: () => {}});
+
   useEffect(() => {
     const savedProfile = localStorage.getItem('liftbook_mock_profile');
     if (savedProfile) {
@@ -685,11 +765,22 @@ export default function App() {
   useEffect(() => {
     const q = query(collection(db, 'rides'), orderBy('created_at', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const ridesData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Ride[];
-      setRides(ridesData);
+      const now = new Date();
+      const validRides: Ride[] = [];
+      
+      snapshot.docs.forEach(docSnapshot => {
+        const rideData = { id: docSnapshot.id, ...docSnapshot.data() } as Ride;
+        const rideDate = new Date(rideData.departure_time);
+        
+        if (differenceInDays(now, rideDate) >= 3) {
+          // Automatically delete rides that are 3 days older than the ride date
+          deleteDoc(doc(db, 'rides', rideData.id)).catch(err => console.error("Failed to auto-delete old ride", err));
+        } else {
+          validRides.push(rideData);
+        }
+      });
+      
+      setRides(validRides);
     });
     return unsubscribe;
   }, []);
@@ -755,11 +846,11 @@ export default function App() {
         },
         (error) => {
           console.error("Error getting location", error);
-          alert("Could not get your location. Please check your browser permissions.");
+          setAlertModal({ isOpen: true, title: "Location Error", message: "Could not get your location. Please check your browser permissions." });
         }
       );
     } else {
-      alert("Geolocation is not supported by your browser.");
+      setAlertModal({ isOpen: true, title: "Location Error", message: "Geolocation is not supported by your browser." });
     }
   };
 
@@ -804,18 +895,25 @@ export default function App() {
       setEditingRide(null);
     } catch (error) {
       console.error("Failed to save ride", error);
-      alert("Failed to save ride. Please check your permissions.");
+      setAlertModal({ isOpen: true, title: "Error", message: "Failed to save ride. Please check your permissions." });
     }
   };
 
-  const handleDeleteRide = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this ride?")) return;
-    try {
-      await deleteDoc(doc(db, 'rides', id));
-    } catch (error) {
-      console.error("Failed to delete ride", error);
-      alert("Failed to delete ride.");
-    }
+  const handleDeleteRide = (id: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Ride",
+      message: "Are you sure you want to delete this ride?",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'rides', id));
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        } catch (error) {
+          console.error("Failed to delete ride", error);
+          setAlertModal({ isOpen: true, title: "Error", message: "Failed to delete ride." });
+        }
+      }
+    });
   };
 
   if (loading) {
@@ -1078,6 +1176,29 @@ export default function App() {
           <LoginModal 
             onClose={() => setIsLoginModalOpen(false)} 
             onLogin={handleMockLogin} 
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {confirmModal.isOpen && (
+          <ConfirmModal
+            isOpen={confirmModal.isOpen}
+            title={confirmModal.title}
+            message={confirmModal.message}
+            onConfirm={confirmModal.onConfirm}
+            onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {alertModal.isOpen && (
+          <AlertModal
+            isOpen={alertModal.isOpen}
+            title={alertModal.title}
+            message={alertModal.message}
+            onClose={() => setAlertModal(prev => ({ ...prev, isOpen: false }))}
           />
         )}
       </AnimatePresence>
