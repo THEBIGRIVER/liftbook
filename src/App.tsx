@@ -935,7 +935,7 @@ export default function App() {
         <header className="sticky top-0 z-40 px-6 py-4 flex justify-between items-center bg-black border-b border-white/10 shadow-sm">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tighter text-white flex items-center gap-1">
-              <span className="bg-[#FF0000] text-white w-8 h-8 flex items-center justify-center rounded-lg">L</span>
+              <img src="/icon.svg" alt="LiftBook Logo" className="w-8 h-8 rounded-lg" />
               iftBook
             </h1>
           </div>
